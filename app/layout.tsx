@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import "./search.css";
 
 export const metadata: Metadata = {
   title: "Iman Truck Sales | New & Used Commercial Trucks",

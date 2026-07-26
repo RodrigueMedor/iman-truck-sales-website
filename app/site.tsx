@@ -8,11 +8,14 @@ const nav = [
 ] as const;
 
 const inventory = [
-  { image: "/images/DSC01736-scaled.jpg", name: "2018 Freightliner M2 106", type: "Box Truck", mileage: "238,420 mi" },
-  { image: "/images/DSC01758-scaled.jpg", name: "2019 Hino 268A", type: "26′ Box Truck", mileage: "214,865 mi" },
-  { image: "/images/DSC01794-scaled.jpg", name: "2020 International MV", type: "Commercial Truck", mileage: "198,730 mi" },
-  { image: "/images/DSC01800-scaled.jpg", name: "2019 Freightliner M2", type: "Straight Truck", mileage: "225,190 mi" },
+  { image: "/images/DSC01736-scaled.jpg", name: "2018 Freightliner M2 106", make: "Freightliner", model: "M2 106", year: "2018", condition: "Used", type: "Box Truck", mileage: "238,420 mi" },
+  { image: "/images/DSC01758-scaled.jpg", name: "2019 Hino 268A", make: "Hino", model: "268A", year: "2019", condition: "Used", type: "26′ Box Truck", mileage: "214,865 mi" },
+  { image: "/images/DSC01794-scaled.jpg", name: "2020 International MV", make: "International", model: "MV", year: "2020", condition: "Used", type: "Commercial Truck", mileage: "198,730 mi" },
+  { image: "/images/DSC01800-scaled.jpg", name: "2019 Freightliner M2", make: "Freightliner", model: "M2 106", year: "2019", condition: "Used", type: "Straight Truck", mileage: "225,190 mi" },
 ] as const;
+
+type Filters = { make: string; model: string; year: string; condition: string };
+const emptyFilters: Filters = { make: "", model: "", year: "", condition: "" };
 
 function Header({ page }: { page: string }) {
   const [open, setOpen] = useState(false);
@@ -28,18 +31,27 @@ function Header({ page }: { page: string }) {
   </>;
 }
 
-function SearchBar() {
+function SearchBar({ onSearch, resultCount = inventory.length }: { onSearch?: (filters: Filters) => void; resultCount?: number }) {
+  const [filters, setFilters] = useState<Filters>(emptyFilters);
+  const update = (key: keyof Filters, value: string) => setFilters(current => ({ ...current, [key]: value }));
+  const search = () => {
+    if (onSearch) return onSearch(filters);
+    const query = new URLSearchParams(Object.entries(filters).filter(([, value]) => value));
+    window.location.href = `/inventory/${query.size ? `?${query}` : ""}`;
+  };
+  const clear = () => { setFilters(emptyFilters); onSearch?.(emptyFilters); };
   return <div className="search-shell"><div className="search-title"><span>⌕</span><div><strong>Find your next truck</strong><small>Search available commercial inventory</small></div></div><div className="search-panel">
-    <div><label>Make</label><select><option>Select Make</option><option>Freightliner</option><option>Hino</option><option>International</option></select></div>
-    <div><label>Model</label><select><option>Select Model</option><option>M2 106</option><option>268A</option><option>MV</option></select></div>
-    <div><label>Year</label><select><option>Select Year</option><option>2020</option><option>2019</option><option>2018</option></select></div>
-    <div><label>Condition</label><select><option>Select Condition</option><option>Used</option></select></div>
-    <a className="search-button" href="/inventory/">Search 4 Trucks →</a>
-  </div></div>;
+    <div><label htmlFor="truck-make">Make</label><select id="truck-make" value={filters.make} onChange={event => update("make", event.target.value)}><option value="">All Makes</option><option>Freightliner</option><option>Hino</option><option>International</option></select></div>
+    <div><label htmlFor="truck-model">Model</label><select id="truck-model" value={filters.model} onChange={event => update("model", event.target.value)}><option value="">All Models</option><option>M2 106</option><option>268A</option><option>MV</option></select></div>
+    <div><label htmlFor="truck-year">Year</label><select id="truck-year" value={filters.year} onChange={event => update("year", event.target.value)}><option value="">All Years</option><option>2020</option><option>2019</option><option>2018</option></select></div>
+    <div><label htmlFor="truck-condition">Condition</label><select id="truck-condition" value={filters.condition} onChange={event => update("condition", event.target.value)}><option value="">All Conditions</option><option>Used</option></select></div>
+    <button className="search-button" type="button" onClick={search}>Search Trucks →</button>
+  </div>{onSearch && <div className="search-feedback"><span>{resultCount} {resultCount === 1 ? "truck" : "trucks"} match your search</span><button type="button" onClick={clear}>Clear filters</button></div>}</div>;
 }
 
-function InventoryCards() {
-  return <div className="truck-grid">{inventory.map((truck, index) => <article className="truck-card" key={truck.name}>
+function InventoryCards({ trucks = inventory }: { trucks?: readonly (typeof inventory)[number][] }) {
+  if (!trucks.length) return <div className="empty-inventory"><b>No trucks match those filters.</b><span>Clear the filters or contact our team so we can help locate the right vehicle.</span><a href="/contact-us/">Ask us to find a truck →</a></div>;
+  return <div className="truck-grid">{trucks.map((truck, index) => <article className="truck-card" key={truck.name}>
     <a className="truck-photo" href="/inventory/"><img src={truck.image} alt={truck.name} /><span>{index === 0 ? "Featured" : "Available"}</span><b>♡</b></a>
     <div className="truck-info"><span className="tag">{truck.type}</span><h3>{truck.name}</h3><div className="specs"><span>◷ {truck.mileage}</span><span>◉ Diesel</span><span>⚙ Automatic</span></div><div className="truck-bottom"><strong>Call for price</strong><a href="/contact-us/">View details →</a></div></div>
   </article>)}</div>;
@@ -61,7 +73,16 @@ function PageHero({ title, text }: { title: string; text: string }) {
   return <section className="page-hero"><div className="wrap"><div className="breadcrumb"><a href="/">Home</a><span>/</span><b>{title}</b></div><p className="eyebrow"><span />Iman Truck Sales</p><h1>{title}</h1><p>{text}</p></div></section>;
 }
 
-function Inventory() { return <><PageHero title="Truck Inventory" text="Explore dependable commercial vehicles selected for business owners and professional operators." /><section className="section wrap"><SearchBar /><div className="results"><strong>4 vehicles found</strong><span>Sort by: Newest first</span></div><InventoryCards /></section><ContactBand /></>; }
+function Inventory() {
+  const [filteredTrucks, setFilteredTrucks] = useState<readonly (typeof inventory)[number][]>(inventory);
+  const filterInventory = (filters: Filters) => setFilteredTrucks(inventory.filter(truck =>
+    (!filters.make || truck.make === filters.make) &&
+    (!filters.model || truck.model === filters.model) &&
+    (!filters.year || truck.year === filters.year) &&
+    (!filters.condition || truck.condition === filters.condition)
+  ));
+  return <><PageHero title="Truck Inventory" text="Explore dependable commercial vehicles selected for business owners and professional operators." /><section className="section wrap"><SearchBar onSearch={filterInventory} resultCount={filteredTrucks.length} /><div className="results"><strong>{filteredTrucks.length} {filteredTrucks.length === 1 ? "vehicle" : "vehicles"} found</strong><span>Sort by: Newest first</span></div><InventoryCards trucks={filteredTrucks} /></section><ContactBand /></>;
+}
 
 function Business() {
   return <><PageHero title="Start a Box Truck Business" text="A practical path from buying the right truck to building a business ready for the road." /><section className="section wrap split"><div><p className="eyebrow blue">Build your future</p><h2>More than a truck. A business opportunity.</h2><p>Iman Truck Sales helps aspiring owners understand the equipment, operating requirements, and decisions involved in launching a box truck business.</p><div className="steps">{["Choose a dependable truck for your operation","Understand registration, insurance, and compliance","Prepare a realistic operating budget","Build relationships and secure freight opportunities"].map((x,i)=><div key={x}><b>{i+1}</b><span>{x}</span></div>)}</div><a className="primary inline" href="/contact-us/">Start the Conversation</a></div><div className="business-image"><img src="/images/pngtree-box-truck-isolated-on-transparent-background-png-image_15814026.png" alt="White box truck" /></div></section><ContactBand /></>;

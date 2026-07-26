@@ -97,7 +97,36 @@ function About() {
 }
 
 function Contact() {
-  return <><PageHero title="Contact Us" text="Ready to drive? Let’s talk strategy." /><section className="section wrap contact-grid"><div><p className="eyebrow blue">Get in touch</p><h2>Tell us what you need.</h2><div className="contact-details"><p><b>Location</b><br />21902 State Road 46, Mount Dora, Florida 32757</p><p><b>Email</b><br />info@imanlogistics.com</p><p><b>Phone</b><br />888-991-4776</p></div></div><form><div className="form-row"><label>First name<input required /></label><label>Last name<input required /></label></div><label>Email<input type="email" required /></label><label>Subject<input required /></label><label>Message<textarea rows={5} required /></label><button className="primary" type="submit">Submit Request</button></form></section></>;
+  return <><PageHero title="Contact Us" text="Tell us what kind of truck or business support you need. Our team is ready to help you plan the next move." />
+    <section className="contact-page">
+      <div className="wrap contact-intro">
+        <div><p className="eyebrow blue">Start the conversation</p><h2>Let’s get you closer to the right truck.</h2></div>
+        <p>Whether you are buying your first box truck, expanding a fleet, or exploring financing, send us the details. A member of our team will follow up with clear next steps.</p>
+      </div>
+      <div className="wrap contact-card-grid">
+        <a className="contact-card" href="tel:8889914776"><span>01</span><div><small>Call our sales team</small><strong>888-991-4776</strong><p>Speak directly with someone who understands commercial trucks.</p></div><b>→</b></a>
+        <a className="contact-card" href="mailto:info@imanlogistics.com"><span>02</span><div><small>Email us</small><strong>info@imanlogistics.com</strong><p>Send vehicle questions, trade details, or financing inquiries.</p></div><b>→</b></a>
+        <a className="contact-card" href="https://maps.google.com/?q=21902+State+Road+46+Mount+Dora+Florida+32757" target="_blank" rel="noopener noreferrer"><span>03</span><div><small>Visit the dealership</small><strong>Mount Dora, Florida</strong><p>21902 State Road 46, Mount Dora, FL 32757</p></div><b>→</b></a>
+      </div>
+      <div className="wrap contact-main">
+        <aside className="contact-aside">
+          <p className="eyebrow">What happens next</p><h2>A simple, responsive process.</h2>
+          <div className="response-steps"><div><b>1</b><span><strong>We review your request</strong><small>Tell us about the truck, financing, or business support you need.</small></span></div><div><b>2</b><span><strong>A specialist contacts you</strong><small>Our team will follow up to clarify your priorities and timeline.</small></span></div><div><b>3</b><span><strong>We plan your next step</strong><small>Review available vehicles, financing direction, or delivery options.</small></span></div></div>
+          <div className="business-hours"><strong>Business hours</strong><span>Monday–Friday · 9:00 AM–6:00 PM</span><span>Saturday · By appointment</span><span>Sunday · Closed</span></div>
+        </aside>
+        <form className="professional-form">
+          <div className="form-heading"><span>Sales inquiry</span><h2>How can we help?</h2><p>Complete the form below and our team will contact you.</p></div>
+          <div className="form-row"><label>First name *<input name="firstName" autoComplete="given-name" required placeholder="First name" /></label><label>Last name *<input name="lastName" autoComplete="family-name" required placeholder="Last name" /></label></div>
+          <div className="form-row"><label>Email address *<input name="email" type="email" autoComplete="email" required placeholder="you@example.com" /></label><label>Phone number<input name="phone" type="tel" autoComplete="tel" placeholder="(000) 000-0000" /></label></div>
+          <label>What are you interested in? *<select name="interest" required defaultValue=""><option value="" disabled>Select one</option><option>Buying a truck</option><option>Financing</option><option>Starting a box truck business</option><option>Nationwide delivery</option><option>Other</option></select></label>
+          <label>Tell us more *<textarea name="message" rows={5} required placeholder="Describe the truck, budget, timeline, or support you need." /></label>
+          <label className="consent"><input type="checkbox" required /><span>I agree to be contacted by Iman Truck Sales about this request.</span></label>
+          <button className="primary submit-contact" type="submit">Send My Request <span>→</span></button>
+          <small className="privacy-note">Your information is used only to respond to this inquiry.</small>
+        </form>
+      </div>
+    </section>
+  </>;
 }
 
 function ContactBand() {

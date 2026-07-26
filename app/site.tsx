@@ -89,7 +89,7 @@ function Business() {
 }
 
 function Financing() {
-  return <><PageHero title="Commercial Truck Financing" text="Flexible paths designed to help qualified buyers move forward with confidence." /><section className="section wrap narrow"><p className="eyebrow blue">Financing solutions</p><h2>Let’s find an option that fits your plan.</h2><p>Whether you are expanding a fleet or purchasing your first commercial truck, our team can help you understand available financing options and prepare your application.</p><div className="feature-grid">{["Simple application process","Options for different credit profiles","Commercial vehicle expertise","Clear, responsive guidance"].map(x=><div className="feature" key={x}>✓ <strong>{x}</strong></div>)}</div><a className="primary inline" href="/contact-us/">Apply for Financing</a></section><ContactBand /></>;
+  return <><PageHero title="Commercial Truck Financing" text="Flexible paths designed to help qualified buyers move forward with confidence." /><section className="section wrap narrow"><p className="eyebrow blue">Financing solutions</p><h2>Let’s find an option that fits your plan.</h2><p>Whether you are expanding a fleet or purchasing your first commercial truck, our team can help you understand available financing options and prepare your application.</p><div className="feature-grid">{["Simple application process","Options for different credit profiles","Commercial vehicle expertise","Clear, responsive guidance"].map(x=><div className="feature" key={x}>✓ <strong>{x}</strong></div>)}</div><a className="primary inline" href="https://coach.lending.online/" target="_blank" rel="noopener noreferrer">Apply for Financing</a></section><ContactBand /></>;
 }
 
 function About() {

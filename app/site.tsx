@@ -2,6 +2,7 @@
 
 import { useEffect, useState, type FormEvent } from "react";
 import { supabase } from "../lib/supabase";
+import "./vehicle-status.css";
 
 const nav = [
   ["Home", "/"], ["Inventory", "/inventory/"], ["Start a Box Truck Business", "/home-page/"],
@@ -9,12 +10,12 @@ const nav = [
 ] as const;
 
 const inventory = [
-  { image: "/images/DSC01736-scaled.jpg", name: "2018 Freightliner M2 106", make: "Freightliner", model: "M2 106", year: "2018", condition: "Used", type: "Box Truck", mileage: "238,420 mi" },
-  { image: "/images/DSC01758-scaled.jpg", name: "2019 Hino 268A", make: "Hino", model: "268A", year: "2019", condition: "Used", type: "26′ Box Truck", mileage: "214,865 mi" },
-  { image: "/images/DSC01794-scaled.jpg", name: "2020 International MV", make: "International", model: "MV", year: "2020", condition: "Used", type: "Commercial Truck", mileage: "198,730 mi" },
-  { image: "/images/DSC01800-scaled.jpg", name: "2019 Freightliner M2", make: "Freightliner", model: "M2 106", year: "2019", condition: "Used", type: "Straight Truck", mileage: "225,190 mi" },
+  { image: "/images/DSC01736-scaled.jpg", name: "2018 Freightliner M2 106", make: "Freightliner", model: "M2 106", year: "2018", condition: "Used", type: "Box Truck", mileage: "238,420 mi", status: "available" },
+  { image: "/images/DSC01758-scaled.jpg", name: "2019 Hino 268A", make: "Hino", model: "268A", year: "2019", condition: "Used", type: "26′ Box Truck", mileage: "214,865 mi", status: "available" },
+  { image: "/images/DSC01794-scaled.jpg", name: "2020 International MV", make: "International", model: "MV", year: "2020", condition: "Used", type: "Commercial Truck", mileage: "198,730 mi", status: "available" },
+  { image: "/images/DSC01800-scaled.jpg", name: "2019 Freightliner M2", make: "Freightliner", model: "M2 106", year: "2019", condition: "Used", type: "Straight Truck", mileage: "225,190 mi", status: "available" },
 ] as const;
-type Truck = { image: string; name: string; make: string; model: string; year: string; condition: string; type: string; mileage: string; price?: number | null };
+type Truck = { image: string; name: string; make: string; model: string; year: string; condition: string; type: string; mileage: string; price?: number | null; status: string };
 type CmsEntry = { page: string; content_key: string; title: string; body: string; image_url: string; button_text: string; button_url: string };
 type CmsLookup = (page: string, key: string, fallback: Omit<CmsEntry, "page" | "content_key">) => CmsEntry;
 
@@ -62,8 +63,8 @@ function SearchBar({ onSearch, resultCount = inventory.length, cms }: { onSearch
 
 function InventoryCards({ trucks = inventory }: { trucks?: readonly Truck[] }) {
   if (!trucks.length) return <div className="empty-inventory"><b>No trucks match those filters.</b><span>Clear the filters or contact our team so we can help locate the right vehicle.</span><a href="/contact-us/">Ask us to find a truck →</a></div>;
-  return <div className="truck-grid">{trucks.map((truck, index) => <article className="truck-card" key={truck.name}>
-    <a className="truck-photo" href="/inventory/"><img src={truck.image} alt={truck.name} /><span>{index === 0 ? "Featured" : "Available"}</span><b>♡</b></a>
+  return <div className="truck-grid">{trucks.map(truck => <article className="truck-card" key={truck.name}>
+    <a className="truck-photo" href="/inventory/"><img src={truck.image} alt={truck.name} /><span className={`vehicle-status status-${truck.status}`}>{truck.status}</span><b>♡</b></a>
     <div className="truck-info"><span className="tag">{truck.type}</span><h3>{truck.name}</h3><div className="specs"><span>◷ {truck.mileage}</span><span>◉ Diesel</span><span>⚙ Automatic</span></div><div className="truck-bottom"><strong>{truck.price ? `$${truck.price.toLocaleString()}` : "Call for price"}</strong><a href="/contact-us/">View details →</a></div></div>
   </article>)}</div>;
 }
@@ -191,6 +192,7 @@ export function TruckSalesSite({ page }: { page: string }) {
         image: vehicle.image_url || "/images/DSC01794-scaled.jpg", name: vehicle.name, make: vehicle.make,
         model: vehicle.model, year: String(vehicle.year), condition: vehicle.condition, type: vehicle.vehicle_type,
         mileage: `${Number(vehicle.mileage).toLocaleString()} mi`, price: vehicle.price ? Number(vehicle.price) : null,
+        status: vehicle.status,
       })));
     });
   }, []);

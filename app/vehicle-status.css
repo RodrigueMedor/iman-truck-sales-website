@@ -1,0 +1,14 @@
+.truck-photo > .vehicle-status.status-available {
+  background: #32d38b;
+  color: #092b1d;
+}
+
+.truck-photo > .vehicle-status.status-pending {
+  background: #f4b740;
+  color: #392700;
+}
+
+.truck-photo > .vehicle-status.status-sold {
+  background: #253541;
+  color: #fff;
+}

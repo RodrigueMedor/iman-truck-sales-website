@@ -2,6 +2,39 @@
   gap: 18px;
 }
 
+.inventory-list-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 4px 2px 14px;
+  border-bottom: 1px solid #dfe7eb;
+}
+
+.inventory-list-heading span {
+  color: #75858e;
+  font-size: 10px;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+}
+
+.inventory-list-heading h2 {
+  margin: 4px 0 0;
+  font-size: 24px;
+}
+
+.inventory-list-heading > strong {
+  padding: 7px 11px;
+  border-radius: 20px;
+  background: #dff7fd;
+  color: #087b9d;
+  font-size: 12px;
+}
+
+.vehicle-available {
+  border-left: 3px solid #19b8e6;
+}
+
 .vehicle-summary {
   display: flex;
   align-items: center;
@@ -56,6 +89,11 @@
 }
 
 @media (max-width: 680px) {
+  .inventory-list-heading {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
   .vehicle-record {
     align-items: stretch;
     flex-direction: column;

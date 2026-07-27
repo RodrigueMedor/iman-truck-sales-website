@@ -58,6 +58,10 @@ export default function AdminPage() {
     leads: inquiries.filter(i => i.status === "new").length,
     pages: new Set(content.map(c => c.page)).size,
   }), [vehicles, inquiries, content]);
+  const orderedVehicles = useMemo(
+    () => [...vehicles].sort((a, b) => Number(b.status === "available") - Number(a.status === "available")),
+    [vehicles],
+  );
 
   if (!isSupabaseConfigured) return <SetupNotice />;
   if (!session) return <Login onSuccess={() => void load()} />;
@@ -179,7 +183,8 @@ export default function AdminPage() {
           </form>
         </Editor>
         <Records>
-          {vehicles.map(v=><article className="record vehicle-record" key={v.id}>
+          <div className="inventory-list-heading"><div><span>Inventory list</span><h2>All vehicles</h2></div><strong>{stats.available} available · {vehicles.length} total</strong></div>
+          {orderedVehicles.map(v=><article className={`record vehicle-record vehicle-${v.status}`} key={v.id}>
             <div className="vehicle-summary">{v.image_url&&<img src={v.image_url} alt=""/>}<div><h3>{v.name}</h3><span>{v.year} {v.make} {v.model} · {v.mileage.toLocaleString()} mi</span></div></div>
             <div className="vehicle-actions">
               <label>Status<select aria-label={`Status for ${v.name}`} value={v.status} onChange={e=>void updateVehicleStatus(v.id,e.target.value)}><option value="available">Available</option><option value="pending">Pending</option><option value="sold">Sold</option><option value="hidden">Hidden</option></select></label>
@@ -187,7 +192,7 @@ export default function AdminPage() {
               <button className="danger" onClick={()=>void remove("vehicles",v.id)}>Delete</button>
             </div>
           </article>)}
-          {!vehicles.length&&<div className="empty-records"><strong>No vehicles yet</strong><span>Add your first vehicle using the form.</span></div>}
+          {!vehicles.length&&<div className="empty-records"><strong>No vehicles yet</strong><span>Add your first vehicle using the form on the left.</span></div>}
         </Records>
       </section>}
       {tab === "content" && <section className="admin-workspace">

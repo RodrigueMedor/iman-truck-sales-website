@@ -4,17 +4,18 @@ import { FormEvent, useEffect, useMemo, useState, type ReactNode } from "react";
 import type { Session } from "@supabase/supabase-js";
 import { isSupabaseConfigured, supabase } from "../../lib/supabase";
 import "./admin.css";
+import "./uploads.css";
 
 type Tab = "dashboard" | "inventory" | "content" | "inquiries";
 type Vehicle = {
   id: string; name: string; make: string; model: string; year: number; condition: string;
   vehicle_type: string; mileage: number; price: number | null; status: string; image_url: string;
 };
-type Content = { id: string; page: string; content_key: string; title: string; body: string };
+type Content = { id: string; page: string; content_key: string; title: string; body: string; image_url: string; button_text: string; button_url: string };
 type Inquiry = { id: string; created_at: string; first_name: string; last_name: string; email: string; phone: string; interest: string; message: string; status: string };
 
 const emptyVehicle = { name: "", make: "", model: "", year: new Date().getFullYear(), condition: "Used", vehicle_type: "Box Truck", mileage: 0, price: null, status: "available", image_url: "" };
-const emptyContent = { page: "home", content_key: "", title: "", body: "" };
+const emptyContent = { page: "home", content_key: "", title: "", body: "", image_url: "", button_text: "", button_url: "" };
 
 export default function AdminPage() {
   const [session, setSession] = useState<Session | null>(null);
@@ -74,6 +75,18 @@ export default function AdminPage() {
     setMessage(result.error?.message || "Content saved successfully.");
     if (!result.error) { setEditingContent(emptyContent); await load(); }
   };
+  const uploadImage = async (file: File, target: "vehicle" | "content") => {
+    if (!supabase) return;
+    const extension = file.name.split(".").pop() || "jpg";
+    const path = `${target}/${crypto.randomUUID()}.${extension}`;
+    setMessage("Uploading image…");
+    const uploaded = await supabase.storage.from("site-media").upload(path, file);
+    if (uploaded.error) return setMessage(uploaded.error.message);
+    const { data } = supabase.storage.from("site-media").getPublicUrl(path);
+    if (target === "vehicle") setEditingVehicle(current => ({ ...current, image_url: data.publicUrl }));
+    else setEditingContent(current => ({ ...current, image_url: data.publicUrl }));
+    setMessage("Image uploaded. Save the record to publish it.");
+  };
   const remove = async (table: "vehicles" | "site_content", id: string) => {
     if (!supabase || !confirm("Delete this item permanently?")) return;
     const result = await supabase.from(table).delete().eq("id", id);
@@ -106,6 +119,7 @@ export default function AdminPage() {
             <Input label="Price (leave empty for call)" type="number" value={editingVehicle.price ?? ""} onChange={price => setEditingVehicle({...editingVehicle,price:price ? Number(price) : null})}/>
             <Input label="Vehicle type" value={editingVehicle.vehicle_type} onChange={vehicle_type => setEditingVehicle({...editingVehicle,vehicle_type})}/>
             <Input label="Image URL" value={editingVehicle.image_url} onChange={image_url => setEditingVehicle({...editingVehicle,image_url})}/>
+            <label className="wide upload-field">Upload vehicle photo<input type="file" accept="image/*" onChange={e=>e.target.files?.[0]&&void uploadImage(e.target.files[0],"vehicle")}/>{editingVehicle.image_url&&<img src={editingVehicle.image_url} alt="Vehicle preview"/>}</label>
             <label>Status<select value={editingVehicle.status} onChange={e=>setEditingVehicle({...editingVehicle,status:e.target.value})}><option value="available">Available</option><option value="pending">Pending</option><option value="sold">Sold</option><option value="hidden">Hidden</option></select></label>
             <button className="admin-primary">Save vehicle</button>
           </form>
@@ -119,6 +133,10 @@ export default function AdminPage() {
             <Input label="Content key" value={editingContent.content_key} onChange={content_key=>setEditingContent({...editingContent,content_key})}/>
             <Input label="Heading" value={editingContent.title} onChange={title=>setEditingContent({...editingContent,title})}/>
             <label className="wide">Body<textarea rows={7} value={editingContent.body || ""} onChange={e=>setEditingContent({...editingContent,body:e.target.value})}/></label>
+            <Input label="Button text" value={editingContent.button_text} onChange={button_text=>setEditingContent({...editingContent,button_text})}/>
+            <Input label="Button link" value={editingContent.button_url} onChange={button_url=>setEditingContent({...editingContent,button_url})}/>
+            <Input label="Image URL" value={editingContent.image_url} onChange={image_url=>setEditingContent({...editingContent,image_url})}/>
+            <label className="wide upload-field">Upload section photo<input type="file" accept="image/*" onChange={e=>e.target.files?.[0]&&void uploadImage(e.target.files[0],"content")}/>{editingContent.image_url&&<img src={editingContent.image_url} alt="Section preview"/>}</label>
             <button className="admin-primary">Save content</button>
           </form>
         </Editor>

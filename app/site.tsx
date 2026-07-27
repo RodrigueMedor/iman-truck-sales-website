@@ -15,6 +15,8 @@ const inventory = [
   { image: "/images/DSC01800-scaled.jpg", name: "2019 Freightliner M2", make: "Freightliner", model: "M2 106", year: "2019", condition: "Used", type: "Straight Truck", mileage: "225,190 mi" },
 ] as const;
 type Truck = { image: string; name: string; make: string; model: string; year: string; condition: string; type: string; mileage: string; price?: number | null };
+type CmsEntry = { page: string; content_key: string; title: string; body: string; image_url: string; button_text: string; button_url: string };
+type CmsLookup = (page: string, key: string, fallback: Omit<CmsEntry, "page" | "content_key">) => CmsEntry;
 
 type Filters = { make: string; model: string; year: string; condition: string };
 const emptyFilters: Filters = { make: "", model: "", year: "", condition: "" };
@@ -59,23 +61,26 @@ function InventoryCards({ trucks = inventory }: { trucks?: readonly Truck[] }) {
   </article>)}</div>;
 }
 
-function Home({ trucks }: { trucks: readonly Truck[] }) {
+function Home({ trucks, cms }: { trucks: readonly Truck[]; cms: CmsLookup }) {
+  const hero = cms("home","hero",{title:"Built to Work. Ready to Earn.",body:"Quality commercial trucks, straightforward financing guidance, and nationwide delivery from a team invested in your success.",image_url:"/images/DSC01794-scaled.jpg",button_text:"Browse Inventory",button_url:"/inventory/"});
+  const featured = cms("home","featured",{title:"Featured Trucks",body:"Explore dependable commercial inventory selected for serious operators.",image_url:"",button_text:"Explore all inventory",button_url:"/inventory/"});
+  const why = cms("home","why",{title:"A smarter way to buy your next commercial truck.",body:"We understand that a truck is more than equipment—it is the engine behind your livelihood. Our team makes the process clear, responsive, and focused on getting you road-ready.",image_url:"/images/DSC01718-scaled.jpg",button_text:"Learn about our team",button_url:"/about-us/"});
   return <>
-    <section className="hero"><div className="wrap hero-content"><div className="hero-copy"><p className="eyebrow"><span />Commercial trucks. Business support.</p><h1>Built to Work.<br /><em>Ready to Earn.</em></h1><p>Quality commercial trucks, straightforward financing guidance, and nationwide delivery from a team invested in your success.</p><div className="hero-actions"><a className="primary" href="/inventory/">Browse Inventory <span>→</span></a><a className="secondary" href="tel:8889914776">Call 888-991-4776</a></div><div className="hero-proof"><span>✓ Nationwide delivery</span><span>✓ Business-first guidance</span><span>✓ Quality inventory</span></div></div></div></section>
+    <section className="hero" style={{backgroundImage:`linear-gradient(90deg,#07131bf7 0%,#091822de 47%,#0c1c2640 78%),linear-gradient(0deg,#08141c8c,transparent 40%),url('${hero.image_url}')`}}><div className="wrap hero-content"><div className="hero-copy"><p className="eyebrow"><span />Commercial trucks. Business support.</p><h1>{hero.title}</h1><p>{hero.body}</p><div className="hero-actions"><a className="primary" href={hero.button_url}>{hero.button_text} <span>→</span></a><a className="secondary" href="tel:8889914776">Call 888-991-4776</a></div><div className="hero-proof"><span>✓ Nationwide delivery</span><span>✓ Business-first guidance</span><span>✓ Quality inventory</span></div></div></div></section>
     <div className="wrap floating-search"><SearchBar /></div>
     <section className="trust-strip"><div className="wrap trust-grid"><div><strong>4</strong><span>Trucks available now</span></div><div><strong>50</strong><span>States we deliver to</span></div><div><strong>3</strong><span>Trusted commercial brands</span></div><div><strong>1</strong><span>Team focused on your goal</span></div></div></section>
-    <section className="section wrap"><div className="section-heading"><div><p className="eyebrow blue">Available now</p><h2>Featured Trucks</h2></div><a href="/inventory/">Explore all inventory →</a></div><InventoryCards trucks={trucks.slice(0,4)} /></section>
-    <section className="why-section"><div className="wrap split"><div className="why-visual"><img src="/images/DSC01718-scaled.jpg" alt="Commercial truck at Iman Truck Sales" /><div className="delivery-card"><b>Nationwide</b><span>Truck delivery across the U.S.</span></div></div><div><p className="eyebrow blue">Why Iman Truck Sales</p><h2>A smarter way to buy your next commercial truck.</h2><p>We understand that a truck is more than equipment—it is the engine behind your livelihood. Our team makes the process clear, responsive, and focused on getting you road-ready.</p><div className="benefit-list">{[["01","Business-first advice","Guidance shaped around how you plan to use and grow with your truck."],["02","Carefully selected inventory","Commercial vehicles chosen for serious operators and new owners."],["03","Support beyond the sale","Financing direction, delivery coordination, and practical next steps."]].map(([n,t,d])=><div key={n}><b>{n}</b><span><strong>{t}</strong><small>{d}</small></span></div>)}</div><a className="text-link" href="/about-us/">Learn about our team →</a></div></div></section>
+    <section className="section wrap"><div className="section-heading"><div><p className="eyebrow blue">Available now</p><h2>{featured.title}</h2><p>{featured.body}</p></div><a href={featured.button_url}>{featured.button_text} →</a></div><InventoryCards trucks={trucks.slice(0,4)} /></section>
+    <section className="why-section"><div className="wrap split"><div className="why-visual"><img src={why.image_url} alt={why.title} /><div className="delivery-card"><b>Nationwide</b><span>Truck delivery across the U.S.</span></div></div><div><p className="eyebrow blue">Why Iman Truck Sales</p><h2>{why.title}</h2><p>{why.body}</p><div className="benefit-list">{[["01","Business-first advice","Guidance shaped around how you plan to use and grow with your truck."],["02","Carefully selected inventory","Commercial vehicles chosen for serious operators and new owners."],["03","Support beyond the sale","Financing direction, delivery coordination, and practical next steps."]].map(([n,t,d])=><div key={n}><b>{n}</b><span><strong>{t}</strong><small>{d}</small></span></div>)}</div><a className="text-link" href={why.button_url}>{why.button_text} →</a></div></div></section>
     <section className="brands"><div className="wrap brand-row"><img src="/images/Freightliner-Logo-scaled.jpg" alt="Freightliner" /><img src="/images/Hino-Logo-scaled.png" alt="Hino" /><img src="/images/International-Trucks-Logo.png" alt="International Trucks" /></div></section>
-    <ContactBand />
+    <ContactBand cms={cms} />
   </>;
 }
 
-function PageHero({ title, text }: { title: string; text: string }) {
-  return <section className="page-hero"><div className="wrap"><div className="breadcrumb"><a href="/">Home</a><span>/</span><b>{title}</b></div><p className="eyebrow"><span />Iman Truck Sales</p><h1>{title}</h1><p>{text}</p></div></section>;
+function PageHero({ entry }: { entry: CmsEntry }) {
+  return <section className="page-hero" style={entry.image_url?{backgroundImage:`linear-gradient(90deg,#07131bf2,#0a19238c),url('${entry.image_url}')`}:undefined}><div className="wrap"><div className="breadcrumb"><a href="/">Home</a><span>/</span><b>{entry.title}</b></div><p className="eyebrow"><span />Iman Truck Sales</p><h1>{entry.title}</h1><p>{entry.body}</p></div></section>;
 }
 
-function Inventory({ trucks }: { trucks: readonly Truck[] }) {
+function Inventory({ trucks, cms }: { trucks: readonly Truck[]; cms: CmsLookup }) {
   const [filteredTrucks, setFilteredTrucks] = useState<readonly Truck[]>(trucks);
   useEffect(() => setFilteredTrucks(trucks), [trucks]);
   const filterInventory = (filters: Filters) => setFilteredTrucks(trucks.filter(truck =>
@@ -84,22 +89,26 @@ function Inventory({ trucks }: { trucks: readonly Truck[] }) {
     (!filters.year || truck.year === filters.year) &&
     (!filters.condition || truck.condition === filters.condition)
   ));
-  return <><PageHero title="Truck Inventory" text="Explore dependable commercial vehicles selected for business owners and professional operators." /><section className="section wrap"><SearchBar onSearch={filterInventory} resultCount={filteredTrucks.length} /><div className="results"><strong>{filteredTrucks.length} {filteredTrucks.length === 1 ? "vehicle" : "vehicles"} found</strong><span>Sort by: Newest first</span></div><InventoryCards trucks={filteredTrucks} /></section><ContactBand /></>;
+  return <><PageHero entry={cms("inventory","hero",{title:"Truck Inventory",body:"Explore dependable commercial vehicles selected for business owners and professional operators.",image_url:"/images/DSC01718-scaled.jpg",button_text:"",button_url:""})} /><section className="section wrap"><SearchBar onSearch={filterInventory} resultCount={filteredTrucks.length} /><div className="results"><strong>{filteredTrucks.length} {filteredTrucks.length === 1 ? "vehicle" : "vehicles"} found</strong><span>Sort by: Newest first</span></div><InventoryCards trucks={filteredTrucks} /></section><ContactBand cms={cms} /></>;
 }
 
-function Business() {
-  return <><PageHero title="Start a Box Truck Business" text="A practical path from buying the right truck to building a business ready for the road." /><section className="section wrap split"><div><p className="eyebrow blue">Build your future</p><h2>More than a truck. A business opportunity.</h2><p>Iman Truck Sales helps aspiring owners understand the equipment, operating requirements, and decisions involved in launching a box truck business.</p><div className="steps">{["Choose a dependable truck for your operation","Understand registration, insurance, and compliance","Prepare a realistic operating budget","Build relationships and secure freight opportunities"].map((x,i)=><div key={x}><b>{i+1}</b><span>{x}</span></div>)}</div><a className="primary inline" href="/contact-us/">Start the Conversation</a></div><div className="business-image"><img src="/images/pngtree-box-truck-isolated-on-transparent-background-png-image_15814026.png" alt="White box truck" /></div></section><ContactBand /></>;
+function Business({cms}:{cms:CmsLookup}) {
+  const main=cms("business","main",{title:"More than a truck. A business opportunity.",body:"Iman Truck Sales helps aspiring owners understand the equipment, operating requirements, and decisions involved in launching a box truck business.",image_url:"/images/pngtree-box-truck-isolated-on-transparent-background-png-image_15814026.png",button_text:"Start the Conversation",button_url:"/contact-us/"});
+  return <><PageHero entry={cms("business","hero",{title:"Start a Box Truck Business",body:"A practical path from buying the right truck to building a business ready for the road.",image_url:"/images/DSC01718-scaled.jpg",button_text:"",button_url:""})} /><section className="section wrap split"><div><p className="eyebrow blue">Build your future</p><h2>{main.title}</h2><p>{main.body}</p><div className="steps">{["Choose a dependable truck for your operation","Understand registration, insurance, and compliance","Prepare a realistic operating budget","Build relationships and secure freight opportunities"].map((x,i)=><div key={x}><b>{i+1}</b><span>{x}</span></div>)}</div><a className="primary inline" href={main.button_url}>{main.button_text}</a></div><div className="business-image"><img src={main.image_url} alt={main.title} /></div></section><ContactBand cms={cms} /></>;
 }
 
-function Financing() {
-  return <><PageHero title="Commercial Truck Financing" text="Flexible paths designed to help qualified buyers move forward with confidence." /><section className="section wrap narrow"><p className="eyebrow blue">Financing solutions</p><h2>Let’s find an option that fits your plan.</h2><p>Whether you are expanding a fleet or purchasing your first commercial truck, our team can help you understand available financing options and prepare your application.</p><div className="feature-grid">{["Simple application process","Options for different credit profiles","Commercial vehicle expertise","Clear, responsive guidance"].map(x=><div className="feature" key={x}>✓ <strong>{x}</strong></div>)}</div><a className="primary inline" href="https://coach.lending.online/" target="_blank" rel="noopener noreferrer">Apply for Financing</a></section><ContactBand /></>;
+function Financing({cms}:{cms:CmsLookup}) {
+  const main=cms("financing","main",{title:"Let’s find an option that fits your plan.",body:"Whether you are expanding a fleet or purchasing your first commercial truck, our team can help you understand available financing options and prepare your application.",image_url:"",button_text:"Apply for Financing",button_url:"https://coach.lending.online/"});
+  return <><PageHero entry={cms("financing","hero",{title:"Commercial Truck Financing",body:"Flexible paths designed to help qualified buyers move forward with confidence.",image_url:"/images/DSC01718-scaled.jpg",button_text:"",button_url:""})} /><section className="section wrap narrow"><p className="eyebrow blue">Financing solutions</p><h2>{main.title}</h2><p>{main.body}</p><div className="feature-grid">{["Simple application process","Options for different credit profiles","Commercial vehicle expertise","Clear, responsive guidance"].map(x=><div className="feature" key={x}>✓ <strong>{x}</strong></div>)}</div><a className="primary inline" href={main.button_url} target="_blank" rel="noopener noreferrer">{main.button_text}</a></section><ContactBand cms={cms} /></>;
 }
 
-function About() {
-  return <><PageHero title="About Iman Truck Sales" text="A business-first truck dealership serving customers in Florida and across the United States." /><section className="section wrap split"><div className="about-image"><img src="/images/X31x9qWyEZGDAKlxvpYrwqLeCf7zDF6CDZeQMvEo.jpeg" alt="Iman Truck Sales team" /></div><div><p className="eyebrow blue">Who we are</p><h2>Trucks, guidance, and service you can rely on.</h2><p>Iman Truck Sales connects customers with quality commercial vehicles and the information they need to make confident decisions. We believe buying a truck should feel straightforward, respectful, and focused on your goals.</p><p>From selecting a vehicle to arranging delivery anywhere in the United States, our team is ready to support your next move.</p><a className="primary inline" href="/inventory/">Explore Inventory</a></div></section><ContactBand /></>;
+function About({cms}:{cms:CmsLookup}) {
+  const main=cms("about","main",{title:"Trucks, guidance, and service you can rely on.",body:"Iman Truck Sales connects customers with quality commercial vehicles and the information they need to make confident decisions. We believe buying a truck should feel straightforward, respectful, and focused on your goals.",image_url:"/images/X31x9qWyEZGDAKlxvpYrwqLeCf7zDF6CDZeQMvEo.jpeg",button_text:"Explore Inventory",button_url:"/inventory/"});
+  return <><PageHero entry={cms("about","hero",{title:"About Iman Truck Sales",body:"A business-first truck dealership serving customers in Florida and across the United States.",image_url:"/images/DSC01718-scaled.jpg",button_text:"",button_url:""})} /><section className="section wrap split"><div className="about-image"><img src={main.image_url} alt={main.title} /></div><div><p className="eyebrow blue">Who we are</p><h2>{main.title}</h2><p>{main.body}</p><a className="primary inline" href={main.button_url}>{main.button_text}</a></div></section><ContactBand cms={cms} /></>;
 }
 
-function Contact() {
+function Contact({cms}:{cms:CmsLookup}) {
+  const intro=cms("contact","intro",{title:"Let’s get you closer to the right truck.",body:"Whether you are buying your first box truck, expanding a fleet, or exploring financing, send us the details. A member of our team will follow up with clear next steps.",image_url:"",button_text:"",button_url:""});
   const [submission, setSubmission] = useState("");
   const submitInquiry = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -119,11 +128,11 @@ function Contact() {
     setSubmission(error ? "We could not send your request. Please call 888-991-4776." : "Thank you. Your request was sent to our sales team.");
     if (!error) event.currentTarget.reset();
   };
-  return <><PageHero title="Contact Us" text="Tell us what kind of truck or business support you need. Our team is ready to help you plan the next move." />
+  return <><PageHero entry={cms("contact","hero",{title:"Contact Us",body:"Tell us what kind of truck or business support you need. Our team is ready to help you plan the next move.",image_url:"/images/DSC01718-scaled.jpg",button_text:"",button_url:""})} />
     <section className="contact-page">
       <div className="wrap contact-intro">
-        <div><p className="eyebrow blue">Start the conversation</p><h2>Let’s get you closer to the right truck.</h2></div>
-        <p>Whether you are buying your first box truck, expanding a fleet, or exploring financing, send us the details. A member of our team will follow up with clear next steps.</p>
+        <div><p className="eyebrow blue">Start the conversation</p><h2>{intro.title}</h2></div>
+        <p>{intro.body}</p>
       </div>
       <div className="wrap contact-card-grid">
         <a className="contact-card" href="tel:8889914776"><span>01</span><div><small>Call our sales team</small><strong>888-991-4776</strong><p>Speak directly with someone who understands commercial trucks.</p></div><b>→</b></a>
@@ -152,16 +161,20 @@ function Contact() {
   </>;
 }
 
-function ContactBand() {
-  return <section className="contact-band"><div className="wrap contact-band-inner"><div><p className="eyebrow">Your truck, delivered anywhere in the U.S.</p><h2>Ready to move your business forward?</h2><span>Tell us what you need and our team will help you plan the next step.</span></div><div className="cta-actions"><a className="light-button" href="/contact-us/">Get in Touch →</a><a href="tel:8889914776">888-991-4776</a></div></div></section>;
+function ContactBand({cms}:{cms:CmsLookup}) {
+  const band=cms("global","contact_band",{title:"Ready to move your business forward?",body:"Tell us what you need and our team will help you plan the next step.",image_url:"",button_text:"Get in Touch",button_url:"/contact-us/"});
+  return <section className="contact-band"><div className="wrap contact-band-inner"><div><p className="eyebrow">Your truck, delivered anywhere in the U.S.</p><h2>{band.title}</h2><span>{band.body}</span></div><div className="cta-actions"><a className="light-button" href={band.button_url}>{band.button_text} →</a><a href="tel:8889914776">888-991-4776</a></div></div></section>;
 }
 
-function Footer() {
-  return <footer><div className="wrap footer-grid"><div><img className="footer-logo" src="/images/IMAN-Truck-Sales-White.png" alt="Iman Truck Sales" /><p>Your trusted source for dependable commercial trucks and practical business guidance.</p></div><div><h3>Quick Links</h3>{nav.slice(0,4).map(([label,href])=><a key={href} href={href}>{label}</a>)}</div><div><h3>Get in Touch</h3><p>21902 State Road 46<br />Mount Dora, FL 32757</p><a href="mailto:info@imanlogistics.com">info@imanlogistics.com</a><a href="tel:8889914776">888-991-4776</a></div></div><div className="copyright">Copyright © 2026 Iman Truck Sales | Powered by Iman Truck Sales</div></footer>;
+function Footer({cms}:{cms:CmsLookup}) {
+  const footer=cms("global","footer",{title:"Your trusted source for dependable commercial trucks and practical business guidance.",body:"21902 State Road 46, Mount Dora, FL 32757|info@imanlogistics.com|888-991-4776",image_url:"/images/IMAN-Truck-Sales-White.png",button_text:"",button_url:""});
+  const [address,email,phone]=footer.body.split("|");
+  return <footer><div className="wrap footer-grid"><div><img className="footer-logo" src={footer.image_url} alt="Iman Truck Sales" /><p>{footer.title}</p></div><div><h3>Quick Links</h3>{nav.slice(0,4).map(([label,href])=><a key={href} href={href}>{label}</a>)}</div><div><h3>Get in Touch</h3><p>{address}</p><a href={`mailto:${email}`}>{email}</a><a href={`tel:${phone}`}>{phone}</a></div></div><div className="copyright">Copyright © 2026 Iman Truck Sales | Powered by Iman Truck Sales</div></footer>;
 }
 
 export function TruckSalesSite({ page }: { page: string }) {
   const [trucks, setTrucks] = useState<readonly Truck[]>(inventory);
+  const [cmsEntries,setCmsEntries]=useState<CmsEntry[]>([]);
   useEffect(() => {
     if (!supabase) return;
     supabase.from("vehicles").select("*").neq("status", "hidden").order("created_at", { ascending: false }).then(({ data }) => {
@@ -172,6 +185,8 @@ export function TruckSalesSite({ page }: { page: string }) {
       })));
     });
   }, []);
-  const content = page === "inventory" ? <Inventory trucks={trucks} /> : page === "home-page" ? <Business /> : page === "financing" ? <Financing /> : page === "about-us" ? <About /> : page === "contact-us" ? <Contact /> : <Home trucks={trucks} />;
-  return <><Header page={page} /><main>{content}</main><Footer /></>;
+  useEffect(()=>{if(!supabase)return; supabase.from("site_content").select("*").then(({data})=>setCmsEntries(data||[]));},[]);
+  const cms:CmsLookup=(pageName,key,fallback)=>cmsEntries.find(entry=>entry.page===pageName&&entry.content_key===key)||{page:pageName,content_key:key,...fallback};
+  const content = page === "inventory" ? <Inventory trucks={trucks} cms={cms} /> : page === "home-page" ? <Business cms={cms} /> : page === "financing" ? <Financing cms={cms} /> : page === "about-us" ? <About cms={cms} /> : page === "contact-us" ? <Contact cms={cms} /> : <Home trucks={trucks} cms={cms} />;
+  return <><Header page={page} /><main>{content}</main><Footer cms={cms} /></>;
 }

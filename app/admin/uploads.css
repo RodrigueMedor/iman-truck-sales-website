@@ -1,0 +1,19 @@
+.upload-field {
+  padding: 14px;
+  border: 1px dashed #b9cbd4;
+  border-radius: 7px;
+  background: #f7fafb;
+}
+
+.upload-field input {
+  background: #fff;
+}
+
+.upload-field img {
+  display: block;
+  width: 100%;
+  max-height: 210px;
+  object-fit: cover;
+  margin-top: 12px;
+  border-radius: 6px;
+}

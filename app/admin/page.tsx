@@ -5,6 +5,7 @@ import type { Session } from "@supabase/supabase-js";
 import { isSupabaseConfigured, supabase } from "../../lib/supabase";
 import "./admin.css";
 import "./uploads.css";
+import "./dashboard.css";
 
 type Tab = "dashboard" | "inventory" | "content" | "inquiries";
 type Vehicle = {
@@ -92,6 +93,12 @@ export default function AdminPage() {
     const result = await supabase.from(table).delete().eq("id", id);
     setMessage(result.error?.message || "Item deleted."); await load();
   };
+  const updateInquiryStatus = async (id: string, status: string) => {
+    if (!supabase) return;
+    const result = await supabase.from("inquiries").update({ status }).eq("id", id);
+    setMessage(result.error?.message || "Inquiry status updated.");
+    if (!result.error) await load();
+  };
 
   return <div className="admin-shell">
     <aside className="admin-sidebar">
@@ -104,10 +111,38 @@ export default function AdminPage() {
     <main className="admin-main">
       <header><div><span>Content management</span><h1>{tab}</h1></div><div className="admin-user">{session.user.email}</div></header>
       {message && <div className="admin-message"><span>{message}</span><button onClick={() => setMessage("")}>×</button></div>}
-      {tab === "dashboard" && <section className="stat-grid">
-        <Stat label="Available vehicles" value={stats.available}/><Stat label="Sold vehicles" value={stats.sold}/>
-        <Stat label="New inquiries" value={stats.leads}/><Stat label="Managed pages" value={stats.pages}/>
-      </section>}
+      {tab === "dashboard" && <>
+        <section className="stat-grid">
+          <Stat label="Available vehicles" value={stats.available}/><Stat label="Sold vehicles" value={stats.sold}/>
+          <Stat label="New inquiries" value={stats.leads}/><Stat label="Managed pages" value={stats.pages}/>
+        </section>
+        <section className="dashboard-grid">
+          <article className="dashboard-panel">
+            <div className="panel-heading"><div><span>Shortcuts</span><h2>Quick actions</h2></div></div>
+            <div className="quick-actions">
+              <button onClick={()=>{setEditingVehicle(emptyVehicle);setTab("inventory")}}>＋ Add a vehicle</button>
+              <button onClick={()=>{setEditingContent(emptyContent);setTab("content")}}>✎ Add website content</button>
+              <button onClick={()=>setTab("inquiries")}>◎ Review inquiries</button>
+              <a href="/" target="_blank">↗ Open public website</a>
+            </div>
+          </article>
+          <article className="dashboard-panel">
+            <div className="panel-heading"><div><span>Inventory</span><h2>Vehicle pipeline</h2></div><button onClick={()=>setTab("inventory")}>Manage</button></div>
+            <div className="pipeline">
+              {["available","pending","sold","hidden"].map(status=><div key={status}><span>{status}</span><strong>{vehicles.filter(v=>v.status===status).length}</strong></div>)}
+            </div>
+          </article>
+          <article className="dashboard-panel wide-panel">
+            <div className="panel-heading"><div><span>Sales desk</span><h2>Recent inquiries</h2></div><button onClick={()=>setTab("inquiries")}>View all</button></div>
+            {inquiries.slice(0,5).map(i=><div className="dashboard-row" key={i.id}><div><strong>{i.first_name} {i.last_name}</strong><span>{i.interest} · {i.email}</span></div><em className={`status-${i.status}`}>{i.status}</em></div>)}
+            {!inquiries.length&&<p className="empty-dashboard">New website inquiries will appear here.</p>}
+          </article>
+          <article className="dashboard-panel">
+            <div className="panel-heading"><div><span>Website</span><h2>Content coverage</h2></div><button onClick={()=>setTab("content")}>Edit</button></div>
+            <div className="coverage-list">{Array.from(new Set(content.map(c=>c.page))).map(pageName=><div key={pageName}><span>{pageName}</span><strong>{content.filter(c=>c.page===pageName).length} sections</strong></div>)}</div>
+          </article>
+        </section>
+      </>}
       {tab === "inventory" && <section className="admin-workspace">
         <Editor title={editingVehicle.id ? "Edit vehicle" : "Add vehicle"}>
           <form onSubmit={saveVehicle} className="admin-form">
@@ -142,7 +177,7 @@ export default function AdminPage() {
         </Editor>
         <Records>{content.map(c=><Record key={c.id} title={`${c.page} · ${c.title}`} meta={c.content_key} onEdit={()=>setEditingContent(c)} onDelete={()=>remove("site_content",c.id)}/>)}</Records>
       </section>}
-      {tab === "inquiries" && <Records>{inquiries.map(i=><Record key={i.id} title={`${i.first_name} ${i.last_name}`} meta={`${i.email} · ${i.interest} · ${new Date(i.created_at).toLocaleDateString()}`} detail={i.message}/>)}</Records>}
+      {tab === "inquiries" && <Records>{inquiries.map(i=><article className="record inquiry-record" key={i.id}><div><h3>{i.first_name} {i.last_name}</h3><span>{i.email} · {i.phone || "No phone"} · {i.interest} · {new Date(i.created_at).toLocaleDateString()}</span><p>{i.message}</p></div><label>Status<select value={i.status} onChange={e=>void updateInquiryStatus(i.id,e.target.value)}><option value="new">New</option><option value="contacted">Contacted</option><option value="qualified">Qualified</option><option value="closed">Closed</option><option value="spam">Spam</option></select></label></article>)}</Records>}
     </main>
   </div>;
 }

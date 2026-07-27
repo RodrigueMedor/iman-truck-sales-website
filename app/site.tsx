@@ -20,22 +20,28 @@ type CmsLookup = (page: string, key: string, fallback: Omit<CmsEntry, "page" | "
 
 type Filters = { make: string; model: string; year: string; condition: string };
 const emptyFilters: Filters = { make: "", model: "", year: "", condition: "" };
+const listItems = (value: string) => value.split(";").map(item => item.trim()).filter(Boolean);
+const columns = (value: string) => listItems(value).map(item => item.split("|").map(part => part.trim()));
 
-function Header({ page }: { page: string }) {
+function Header({ page, cms }: { page: string; cms: CmsLookup }) {
   const [open, setOpen] = useState(false);
   const current = page === "home" ? "/" : `/${page}/`;
+  const header=cms("global","header",{title:"Request Appointment",body:"21902 State Road 46, Mount Dora, FL 32757|info@imanlogistics.com|888-991-4776",image_url:"/images/IMAN-Truck-Sales-White.png",button_text:"Request Appointment",button_url:"/contact-us/"});
+  const [address,email,phone]=header.body.split("|");
+  const navigation=cms("global","navigation",{title:"Website menu",body:"Home|/;Inventory|/inventory/;Start a Box Truck Business|/home-page/;Financing|/financing/;About us|/about-us/;Contact us|/contact-us/",image_url:"",button_text:"",button_url:""});
+  const menuItems=columns(navigation.body);
   return <>
-    <div className="topbar"><div className="wrap topbar-inner"><span>⌖ 21902 State Road 46, Mount Dora, FL 32757</span><span>info@imanlogistics.com</span><a href="tel:8889914776">888-991-4776</a></div></div>
+    <div className="topbar"><div className="wrap topbar-inner"><span>⌖ {address}</span><span>{email}</span><a href={`tel:${phone}`}>{phone}</a></div></div>
     <header className="header"><div className="wrap nav-wrap">
-      <a className="logo" href="/" aria-label="Iman Truck Sales home"><img src="/images/IMAN-Truck-Sales-White.png" alt="Iman Truck Sales" /></a>
+      <a className="logo" href="/" aria-label="Iman Truck Sales home"><img src={header.image_url} alt="Iman Truck Sales" /></a>
       <button className="menu-button" onClick={() => setOpen(!open)} aria-expanded={open} aria-label="Open menu">☰</button>
-      <nav className={open ? "nav open" : "nav"}>{nav.map(([label, href]) => <a key={href} className={current === href ? "active" : ""} aria-current={current === href ? "page" : undefined} href={href}>{label}</a>)}</nav>
-      <a className="appointment" href="/contact-us/">Request Appointment</a>
+      <nav className={open ? "nav open" : "nav"}>{menuItems.map(([label, href]) => <a key={href} className={current === href ? "active" : ""} aria-current={current === href ? "page" : undefined} href={href}>{label}</a>)}</nav>
+      <a className="appointment" href={header.button_url}>{header.button_text}</a>
     </div></header>
   </>;
 }
 
-function SearchBar({ onSearch, resultCount = inventory.length }: { onSearch?: (filters: Filters) => void; resultCount?: number }) {
+function SearchBar({ onSearch, resultCount = inventory.length, cms }: { onSearch?: (filters: Filters) => void; resultCount?: number; cms?: CmsLookup }) {
   const [filters, setFilters] = useState<Filters>(emptyFilters);
   const update = (key: keyof Filters, value: string) => setFilters(current => ({ ...current, [key]: value }));
   const search = () => {
@@ -44,12 +50,13 @@ function SearchBar({ onSearch, resultCount = inventory.length }: { onSearch?: (f
     window.location.href = `/inventory/${query.size ? `?${query}` : ""}`;
   };
   const clear = () => { setFilters(emptyFilters); onSearch?.(emptyFilters); };
-  return <div className="search-shell"><div className="search-title"><span>⌕</span><div><strong>Find your next truck</strong><small>Search available commercial inventory</small></div></div><div className="search-panel">
+  const copy=cms?cms("inventory","search",{title:"Find your next truck",body:"Search available commercial inventory",image_url:"",button_text:"Search Trucks",button_url:""}):{title:"Find your next truck",body:"Search available commercial inventory",button_text:"Search Trucks"};
+  return <div className="search-shell"><div className="search-title"><span>⌕</span><div><strong>{copy.title}</strong><small>{copy.body}</small></div></div><div className="search-panel">
     <div><label htmlFor="truck-make">Make</label><select id="truck-make" value={filters.make} onChange={event => update("make", event.target.value)}><option value="">All Makes</option><option>Freightliner</option><option>Hino</option><option>International</option></select></div>
     <div><label htmlFor="truck-model">Model</label><select id="truck-model" value={filters.model} onChange={event => update("model", event.target.value)}><option value="">All Models</option><option>M2 106</option><option>268A</option><option>MV</option></select></div>
     <div><label htmlFor="truck-year">Year</label><select id="truck-year" value={filters.year} onChange={event => update("year", event.target.value)}><option value="">All Years</option><option>2020</option><option>2019</option><option>2018</option></select></div>
     <div><label htmlFor="truck-condition">Condition</label><select id="truck-condition" value={filters.condition} onChange={event => update("condition", event.target.value)}><option value="">All Conditions</option><option>Used</option></select></div>
-    <button className="search-button" type="button" onClick={search}>Search Trucks →</button>
+    <button className="search-button" type="button" onClick={search}>{copy.button_text} →</button>
   </div>{onSearch && <div className="search-feedback"><span>{resultCount} {resultCount === 1 ? "truck" : "trucks"} match your search</span><button type="button" onClick={clear}>Clear filters</button></div>}</div>;
 }
 
@@ -65,12 +72,14 @@ function Home({ trucks, cms }: { trucks: readonly Truck[]; cms: CmsLookup }) {
   const hero = cms("home","hero",{title:"Built to Work. Ready to Earn.",body:"Quality commercial trucks, straightforward financing guidance, and nationwide delivery from a team invested in your success.",image_url:"/images/DSC01794-scaled.jpg",button_text:"Browse Inventory",button_url:"/inventory/"});
   const featured = cms("home","featured",{title:"Featured Trucks",body:"Explore dependable commercial inventory selected for serious operators.",image_url:"",button_text:"Explore all inventory",button_url:"/inventory/"});
   const why = cms("home","why",{title:"A smarter way to buy your next commercial truck.",body:"We understand that a truck is more than equipment—it is the engine behind your livelihood. Our team makes the process clear, responsive, and focused on getting you road-ready.",image_url:"/images/DSC01718-scaled.jpg",button_text:"Learn about our team",button_url:"/about-us/"});
+  const statistics=columns(cms("home","statistics",{title:"Homepage statistics",body:"4|Trucks available now;50|States we deliver to;3|Trusted commercial brands;1|Team focused on your goal",image_url:"",button_text:"",button_url:""}).body);
+  const benefits=columns(cms("home","benefits",{title:"Why customers choose us",body:"Business-first advice|Guidance shaped around how you plan to use and grow with your truck.;Carefully selected inventory|Commercial vehicles chosen for serious operators and new owners.;Support beyond the sale|Financing direction, delivery coordination, and practical next steps.",image_url:"",button_text:"",button_url:""}).body);
   return <>
     <section className="hero" style={{backgroundImage:`linear-gradient(90deg,#07131bf7 0%,#091822de 47%,#0c1c2640 78%),linear-gradient(0deg,#08141c8c,transparent 40%),url('${hero.image_url}')`}}><div className="wrap hero-content"><div className="hero-copy"><p className="eyebrow"><span />Commercial trucks. Business support.</p><h1>{hero.title}</h1><p>{hero.body}</p><div className="hero-actions"><a className="primary" href={hero.button_url}>{hero.button_text} <span>→</span></a><a className="secondary" href="tel:8889914776">Call 888-991-4776</a></div><div className="hero-proof"><span>✓ Nationwide delivery</span><span>✓ Business-first guidance</span><span>✓ Quality inventory</span></div></div></div></section>
-    <div className="wrap floating-search"><SearchBar /></div>
-    <section className="trust-strip"><div className="wrap trust-grid"><div><strong>4</strong><span>Trucks available now</span></div><div><strong>50</strong><span>States we deliver to</span></div><div><strong>3</strong><span>Trusted commercial brands</span></div><div><strong>1</strong><span>Team focused on your goal</span></div></div></section>
+    <div className="wrap floating-search"><SearchBar cms={cms} /></div>
+    <section className="trust-strip"><div className="wrap trust-grid">{statistics.map(([value,label])=><div key={label}><strong>{value}</strong><span>{label}</span></div>)}</div></section>
     <section className="section wrap"><div className="section-heading"><div><p className="eyebrow blue">Available now</p><h2>{featured.title}</h2><p>{featured.body}</p></div><a href={featured.button_url}>{featured.button_text} →</a></div><InventoryCards trucks={trucks.slice(0,4)} /></section>
-    <section className="why-section"><div className="wrap split"><div className="why-visual"><img src={why.image_url} alt={why.title} /><div className="delivery-card"><b>Nationwide</b><span>Truck delivery across the U.S.</span></div></div><div><p className="eyebrow blue">Why Iman Truck Sales</p><h2>{why.title}</h2><p>{why.body}</p><div className="benefit-list">{[["01","Business-first advice","Guidance shaped around how you plan to use and grow with your truck."],["02","Carefully selected inventory","Commercial vehicles chosen for serious operators and new owners."],["03","Support beyond the sale","Financing direction, delivery coordination, and practical next steps."]].map(([n,t,d])=><div key={n}><b>{n}</b><span><strong>{t}</strong><small>{d}</small></span></div>)}</div><a className="text-link" href={why.button_url}>{why.button_text} →</a></div></div></section>
+    <section className="why-section"><div className="wrap split"><div className="why-visual"><img src={why.image_url} alt={why.title} /><div className="delivery-card"><b>Nationwide</b><span>Truck delivery across the U.S.</span></div></div><div><p className="eyebrow blue">Why Iman Truck Sales</p><h2>{why.title}</h2><p>{why.body}</p><div className="benefit-list">{benefits.map(([title,description],index)=><div key={title}><b>{String(index+1).padStart(2,"0")}</b><span><strong>{title}</strong><small>{description}</small></span></div>)}</div><a className="text-link" href={why.button_url}>{why.button_text} →</a></div></div></section>
     <section className="brands"><div className="wrap brand-row"><img src="/images/Freightliner-Logo-scaled.jpg" alt="Freightliner" /><img src="/images/Hino-Logo-scaled.png" alt="Hino" /><img src="/images/International-Trucks-Logo.png" alt="International Trucks" /></div></section>
     <ContactBand cms={cms} />
   </>;
@@ -188,5 +197,5 @@ export function TruckSalesSite({ page }: { page: string }) {
   useEffect(()=>{if(!supabase)return; supabase.from("site_content").select("*").then(({data})=>setCmsEntries(data||[]));},[]);
   const cms:CmsLookup=(pageName,key,fallback)=>cmsEntries.find(entry=>entry.page===pageName&&entry.content_key===key)||{page:pageName,content_key:key,...fallback};
   const content = page === "inventory" ? <Inventory trucks={trucks} cms={cms} /> : page === "home-page" ? <Business cms={cms} /> : page === "financing" ? <Financing cms={cms} /> : page === "about-us" ? <About cms={cms} /> : page === "contact-us" ? <Contact cms={cms} /> : <Home trucks={trucks} cms={cms} />;
-  return <><Header page={page} /><main>{content}</main><Footer cms={cms} /></>;
+  return <><Header page={page} cms={cms} /><main>{content}</main><Footer cms={cms} /></>;
 }

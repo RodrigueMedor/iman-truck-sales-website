@@ -1,0 +1,44 @@
+.inquiry-actions {
+  display: grid;
+  grid-template-columns: minmax(130px, 1fr) auto auto;
+  align-items: end;
+  gap: 8px;
+}
+
+.inquiry-actions label {
+  color: #6f8089;
+  font-size: 11px;
+}
+
+.inquiry-actions select {
+  display: block;
+  width: 100%;
+  margin-top: 7px;
+  padding: 9px;
+  border: 1px solid #cbd7dd;
+  border-radius: 5px;
+  background: #fff;
+}
+
+.form-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.admin-secondary {
+  padding: 11px 16px;
+  border: 1px solid #bccbd2;
+  border-radius: 5px;
+  background: #fff;
+  color: #29434f;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+@media (max-width: 560px) {
+  .inquiry-actions {
+    width: 100%;
+    grid-template-columns: 1fr auto auto;
+  }
+}

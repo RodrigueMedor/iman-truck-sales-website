@@ -6,6 +6,7 @@ import { isSupabaseConfigured, supabase } from "../../lib/supabase";
 import "./admin.css";
 import "./uploads.css";
 import "./dashboard.css";
+import "./inquiries.css";
 
 type Tab = "dashboard" | "inventory" | "content" | "inquiries";
 type Vehicle = {
@@ -17,6 +18,7 @@ type Inquiry = { id: string; created_at: string; first_name: string; last_name: 
 
 const emptyVehicle = { name: "", make: "", model: "", year: new Date().getFullYear(), condition: "Used", vehicle_type: "Box Truck", mileage: 0, price: null, status: "available", image_url: "" };
 const emptyContent = { page: "home", content_key: "", title: "", body: "", image_url: "", button_text: "", button_url: "" };
+const emptyInquiry = { first_name: "", last_name: "", email: "", phone: "", interest: "Truck purchase", message: "", status: "new" };
 
 export default function AdminPage() {
   const [session, setSession] = useState<Session | null>(null);
@@ -27,6 +29,7 @@ export default function AdminPage() {
   const [message, setMessage] = useState("");
   const [editingVehicle, setEditingVehicle] = useState<Partial<Vehicle>>(emptyVehicle);
   const [editingContent, setEditingContent] = useState<Partial<Content>>(emptyContent);
+  const [editingInquiry, setEditingInquiry] = useState<Partial<Inquiry>>(emptyInquiry);
 
   useEffect(() => {
     if (!supabase) return;
@@ -76,6 +79,15 @@ export default function AdminPage() {
     setMessage(result.error?.message || "Content saved successfully.");
     if (!result.error) { setEditingContent(emptyContent); await load(); }
   };
+  const saveInquiry = async (event: FormEvent) => {
+    event.preventDefault(); if (!supabase) return;
+    const { id, created_at, ...fields } = editingInquiry;
+    const result = id
+      ? await supabase.from("inquiries").update(fields).eq("id", id)
+      : await supabase.from("inquiries").insert(fields);
+    setMessage(result.error?.message || (id ? "Inquiry updated successfully." : "Inquiry created successfully."));
+    if (!result.error) { setEditingInquiry(emptyInquiry); await load(); }
+  };
   const uploadImage = async (file: File, target: "vehicle" | "content") => {
     if (!supabase) return;
     const extension = file.name.split(".").pop() || "jpg";
@@ -88,7 +100,7 @@ export default function AdminPage() {
     else setEditingContent(current => ({ ...current, image_url: data.publicUrl }));
     setMessage("Image uploaded. Save the record to publish it.");
   };
-  const remove = async (table: "vehicles" | "site_content", id: string) => {
+  const remove = async (table: "vehicles" | "site_content" | "inquiries", id: string) => {
     if (!supabase || !confirm("Delete this item permanently?")) return;
     const result = await supabase.from(table).delete().eq("id", id);
     setMessage(result.error?.message || "Item deleted."); await load();
@@ -122,7 +134,7 @@ export default function AdminPage() {
             <div className="quick-actions">
               <button onClick={()=>{setEditingVehicle(emptyVehicle);setTab("inventory")}}>＋ Add a vehicle</button>
               <button onClick={()=>{setEditingContent(emptyContent);setTab("content")}}>✎ Add website content</button>
-              <button onClick={()=>setTab("inquiries")}>◎ Review inquiries</button>
+              <button onClick={()=>{setEditingInquiry(emptyInquiry);setTab("inquiries")}}>◎ Add an inquiry</button>
               <a href="/" target="_blank">↗ Open public website</a>
             </div>
           </article>
@@ -177,7 +189,24 @@ export default function AdminPage() {
         </Editor>
         <Records>{content.map(c=><Record key={c.id} title={`${c.page} · ${c.title}`} meta={c.content_key} onEdit={()=>setEditingContent(c)} onDelete={()=>remove("site_content",c.id)}/>)}</Records>
       </section>}
-      {tab === "inquiries" && <Records>{inquiries.map(i=><article className="record inquiry-record" key={i.id}><div><h3>{i.first_name} {i.last_name}</h3><span>{i.email} · {i.phone || "No phone"} · {i.interest} · {new Date(i.created_at).toLocaleDateString()}</span><p>{i.message}</p></div><label>Status<select value={i.status} onChange={e=>void updateInquiryStatus(i.id,e.target.value)}><option value="new">New</option><option value="contacted">Contacted</option><option value="qualified">Qualified</option><option value="closed">Closed</option><option value="spam">Spam</option></select></label></article>)}</Records>}
+      {tab === "inquiries" && <section className="admin-workspace">
+        <Editor title={editingInquiry.id ? "Edit inquiry" : "Add inquiry"}>
+          <form onSubmit={saveInquiry} className="admin-form">
+            <Input label="First name" value={editingInquiry.first_name} onChange={first_name=>setEditingInquiry({...editingInquiry,first_name})}/>
+            <Input label="Last name" value={editingInquiry.last_name} onChange={last_name=>setEditingInquiry({...editingInquiry,last_name})}/>
+            <Input label="Email" type="email" value={editingInquiry.email} onChange={email=>setEditingInquiry({...editingInquiry,email})}/>
+            <Input label="Phone" type="tel" required={false} value={editingInquiry.phone} onChange={phone=>setEditingInquiry({...editingInquiry,phone})}/>
+            <label>Interest<select value={editingInquiry.interest || "Truck purchase"} onChange={e=>setEditingInquiry({...editingInquiry,interest:e.target.value})}><option>Truck purchase</option><option>Vehicle financing</option><option>Trade-in</option><option>General question</option><option>Other</option></select></label>
+            <label>Status<select value={editingInquiry.status || "new"} onChange={e=>setEditingInquiry({...editingInquiry,status:e.target.value})}><option value="new">New</option><option value="contacted">Contacted</option><option value="qualified">Qualified</option><option value="closed">Closed</option><option value="spam">Spam</option></select></label>
+            <label className="wide">Message<textarea rows={6} required value={editingInquiry.message || ""} onChange={e=>setEditingInquiry({...editingInquiry,message:e.target.value})}/></label>
+            <div className="form-actions wide">
+              <button className="admin-primary">{editingInquiry.id ? "Update inquiry" : "Create inquiry"}</button>
+              {editingInquiry.id&&<button type="button" className="admin-secondary" onClick={()=>setEditingInquiry(emptyInquiry)}>Cancel editing</button>}
+            </div>
+          </form>
+        </Editor>
+        <Records>{inquiries.map(i=><article className="record inquiry-record" key={i.id}><div><h3>{i.first_name} {i.last_name}</h3><span>{i.email} · {i.phone || "No phone"} · {i.interest} · {new Date(i.created_at).toLocaleDateString()}</span><p>{i.message}</p></div><div className="inquiry-actions"><label>Status<select value={i.status} onChange={e=>void updateInquiryStatus(i.id,e.target.value)}><option value="new">New</option><option value="contacted">Contacted</option><option value="qualified">Qualified</option><option value="closed">Closed</option><option value="spam">Spam</option></select></label><button onClick={()=>setEditingInquiry(i)}>Edit</button><button className="danger" onClick={()=>void remove("inquiries",i.id)}>Delete</button></div></article>)}</Records>
+      </section>}
     </main>
   </div>;
 }
@@ -192,4 +221,4 @@ function Stat({label,value}:{label:string,value:number}){return <article classNa
 function Editor({title,children}:{title:string,children:ReactNode}){return <div className="editor"><h2>{title}</h2>{children}</div>}
 function Records({children}:{children:ReactNode}){return <div className="records">{children}</div>}
 function Record({title,meta,detail,onEdit,onDelete}:{title:string,meta:string,detail?:string,onEdit?:()=>void,onDelete?:()=>void}){return <article className="record"><div><h3>{title}</h3><span>{meta}</span>{detail&&<p>{detail}</p>}</div><div>{onEdit&&<button onClick={onEdit}>Edit</button>}{onDelete&&<button className="danger" onClick={onDelete}>Delete</button>}</div></article>}
-function Input({label,value,onChange,type="text"}:{label:string,value:unknown,onChange:(value:string)=>void,type?:string}){return <label>{label}<input required={label!=="Price (leave empty for call)"} type={type} value={String(value??"")} onChange={e=>onChange(e.target.value)}/></label>}
+function Input({label,value,onChange,type="text",required=true}:{label:string,value:unknown,onChange:(value:string)=>void,type?:string,required?:boolean}){return <label>{label}<input required={required && label!=="Price (leave empty for call)"} type={type} value={String(value??"")} onChange={e=>onChange(e.target.value)}/></label>}

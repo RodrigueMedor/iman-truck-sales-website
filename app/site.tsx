@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState, type FormEvent } from "react";
+import { supabase } from "../lib/supabase";
 
 const nav = [
   ["Home", "/"], ["Inventory", "/inventory/"], ["Start a Box Truck Business", "/home-page/"],
@@ -13,6 +14,7 @@ const inventory = [
   { image: "/images/DSC01794-scaled.jpg", name: "2020 International MV", make: "International", model: "MV", year: "2020", condition: "Used", type: "Commercial Truck", mileage: "198,730 mi" },
   { image: "/images/DSC01800-scaled.jpg", name: "2019 Freightliner M2", make: "Freightliner", model: "M2 106", year: "2019", condition: "Used", type: "Straight Truck", mileage: "225,190 mi" },
 ] as const;
+type Truck = { image: string; name: string; make: string; model: string; year: string; condition: string; type: string; mileage: string; price?: number | null };
 
 type Filters = { make: string; model: string; year: string; condition: string };
 const emptyFilters: Filters = { make: "", model: "", year: "", condition: "" };
@@ -49,20 +51,20 @@ function SearchBar({ onSearch, resultCount = inventory.length }: { onSearch?: (f
   </div>{onSearch && <div className="search-feedback"><span>{resultCount} {resultCount === 1 ? "truck" : "trucks"} match your search</span><button type="button" onClick={clear}>Clear filters</button></div>}</div>;
 }
 
-function InventoryCards({ trucks = inventory }: { trucks?: readonly (typeof inventory)[number][] }) {
+function InventoryCards({ trucks = inventory }: { trucks?: readonly Truck[] }) {
   if (!trucks.length) return <div className="empty-inventory"><b>No trucks match those filters.</b><span>Clear the filters or contact our team so we can help locate the right vehicle.</span><a href="/contact-us/">Ask us to find a truck →</a></div>;
   return <div className="truck-grid">{trucks.map((truck, index) => <article className="truck-card" key={truck.name}>
     <a className="truck-photo" href="/inventory/"><img src={truck.image} alt={truck.name} /><span>{index === 0 ? "Featured" : "Available"}</span><b>♡</b></a>
-    <div className="truck-info"><span className="tag">{truck.type}</span><h3>{truck.name}</h3><div className="specs"><span>◷ {truck.mileage}</span><span>◉ Diesel</span><span>⚙ Automatic</span></div><div className="truck-bottom"><strong>Call for price</strong><a href="/contact-us/">View details →</a></div></div>
+    <div className="truck-info"><span className="tag">{truck.type}</span><h3>{truck.name}</h3><div className="specs"><span>◷ {truck.mileage}</span><span>◉ Diesel</span><span>⚙ Automatic</span></div><div className="truck-bottom"><strong>{truck.price ? `$${truck.price.toLocaleString()}` : "Call for price"}</strong><a href="/contact-us/">View details →</a></div></div>
   </article>)}</div>;
 }
 
-function Home() {
+function Home({ trucks }: { trucks: readonly Truck[] }) {
   return <>
     <section className="hero"><div className="wrap hero-content"><div className="hero-copy"><p className="eyebrow"><span />Commercial trucks. Business support.</p><h1>Built to Work.<br /><em>Ready to Earn.</em></h1><p>Quality commercial trucks, straightforward financing guidance, and nationwide delivery from a team invested in your success.</p><div className="hero-actions"><a className="primary" href="/inventory/">Browse Inventory <span>→</span></a><a className="secondary" href="tel:8889914776">Call 888-991-4776</a></div><div className="hero-proof"><span>✓ Nationwide delivery</span><span>✓ Business-first guidance</span><span>✓ Quality inventory</span></div></div></div></section>
     <div className="wrap floating-search"><SearchBar /></div>
     <section className="trust-strip"><div className="wrap trust-grid"><div><strong>4</strong><span>Trucks available now</span></div><div><strong>50</strong><span>States we deliver to</span></div><div><strong>3</strong><span>Trusted commercial brands</span></div><div><strong>1</strong><span>Team focused on your goal</span></div></div></section>
-    <section className="section wrap"><div className="section-heading"><div><p className="eyebrow blue">Available now</p><h2>Featured Trucks</h2></div><a href="/inventory/">Explore all inventory →</a></div><InventoryCards /></section>
+    <section className="section wrap"><div className="section-heading"><div><p className="eyebrow blue">Available now</p><h2>Featured Trucks</h2></div><a href="/inventory/">Explore all inventory →</a></div><InventoryCards trucks={trucks.slice(0,4)} /></section>
     <section className="why-section"><div className="wrap split"><div className="why-visual"><img src="/images/DSC01718-scaled.jpg" alt="Commercial truck at Iman Truck Sales" /><div className="delivery-card"><b>Nationwide</b><span>Truck delivery across the U.S.</span></div></div><div><p className="eyebrow blue">Why Iman Truck Sales</p><h2>A smarter way to buy your next commercial truck.</h2><p>We understand that a truck is more than equipment—it is the engine behind your livelihood. Our team makes the process clear, responsive, and focused on getting you road-ready.</p><div className="benefit-list">{[["01","Business-first advice","Guidance shaped around how you plan to use and grow with your truck."],["02","Carefully selected inventory","Commercial vehicles chosen for serious operators and new owners."],["03","Support beyond the sale","Financing direction, delivery coordination, and practical next steps."]].map(([n,t,d])=><div key={n}><b>{n}</b><span><strong>{t}</strong><small>{d}</small></span></div>)}</div><a className="text-link" href="/about-us/">Learn about our team →</a></div></div></section>
     <section className="brands"><div className="wrap brand-row"><img src="/images/Freightliner-Logo-scaled.jpg" alt="Freightliner" /><img src="/images/Hino-Logo-scaled.png" alt="Hino" /><img src="/images/International-Trucks-Logo.png" alt="International Trucks" /></div></section>
     <ContactBand />
@@ -73,9 +75,10 @@ function PageHero({ title, text }: { title: string; text: string }) {
   return <section className="page-hero"><div className="wrap"><div className="breadcrumb"><a href="/">Home</a><span>/</span><b>{title}</b></div><p className="eyebrow"><span />Iman Truck Sales</p><h1>{title}</h1><p>{text}</p></div></section>;
 }
 
-function Inventory() {
-  const [filteredTrucks, setFilteredTrucks] = useState<readonly (typeof inventory)[number][]>(inventory);
-  const filterInventory = (filters: Filters) => setFilteredTrucks(inventory.filter(truck =>
+function Inventory({ trucks }: { trucks: readonly Truck[] }) {
+  const [filteredTrucks, setFilteredTrucks] = useState<readonly Truck[]>(trucks);
+  useEffect(() => setFilteredTrucks(trucks), [trucks]);
+  const filterInventory = (filters: Filters) => setFilteredTrucks(trucks.filter(truck =>
     (!filters.make || truck.make === filters.make) &&
     (!filters.model || truck.model === filters.model) &&
     (!filters.year || truck.year === filters.year) &&
@@ -97,6 +100,25 @@ function About() {
 }
 
 function Contact() {
+  const [submission, setSubmission] = useState("");
+  const submitInquiry = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (!supabase) {
+      setSubmission("Online inquiries are being configured. Please call 888-991-4776.");
+      return;
+    }
+    const form = new FormData(event.currentTarget);
+    const { error } = await supabase.from("inquiries").insert({
+      first_name: form.get("firstName"),
+      last_name: form.get("lastName"),
+      email: form.get("email"),
+      phone: form.get("phone") || "",
+      interest: form.get("interest"),
+      message: form.get("message"),
+    });
+    setSubmission(error ? "We could not send your request. Please call 888-991-4776." : "Thank you. Your request was sent to our sales team.");
+    if (!error) event.currentTarget.reset();
+  };
   return <><PageHero title="Contact Us" text="Tell us what kind of truck or business support you need. Our team is ready to help you plan the next move." />
     <section className="contact-page">
       <div className="wrap contact-intro">
@@ -114,7 +136,7 @@ function Contact() {
           <div className="response-steps"><div><b>1</b><span><strong>We review your request</strong><small>Tell us about the truck, financing, or business support you need.</small></span></div><div><b>2</b><span><strong>A specialist contacts you</strong><small>Our team will follow up to clarify your priorities and timeline.</small></span></div><div><b>3</b><span><strong>We plan your next step</strong><small>Review available vehicles, financing direction, or delivery options.</small></span></div></div>
           <div className="business-hours"><strong>Business hours</strong><span>Monday–Friday · 9:00 AM–6:00 PM</span><span>Saturday · By appointment</span><span>Sunday · Closed</span></div>
         </aside>
-        <form className="professional-form">
+        <form className="professional-form" onSubmit={submitInquiry}>
           <div className="form-heading"><span>Sales inquiry</span><h2>How can we help?</h2><p>Complete the form below and our team will contact you.</p></div>
           <div className="form-row"><label>First name *<input name="firstName" autoComplete="given-name" required placeholder="First name" /></label><label>Last name *<input name="lastName" autoComplete="family-name" required placeholder="Last name" /></label></div>
           <div className="form-row"><label>Email address *<input name="email" type="email" autoComplete="email" required placeholder="you@example.com" /></label><label>Phone number<input name="phone" type="tel" autoComplete="tel" placeholder="(000) 000-0000" /></label></div>
@@ -122,6 +144,7 @@ function Contact() {
           <label>Tell us more *<textarea name="message" rows={5} required placeholder="Describe the truck, budget, timeline, or support you need." /></label>
           <label className="consent"><input type="checkbox" required /><span>I agree to be contacted by Iman Truck Sales about this request.</span></label>
           <button className="primary submit-contact" type="submit">Send My Request <span>→</span></button>
+          {submission && <strong role="status">{submission}</strong>}
           <small className="privacy-note">Your information is used only to respond to this inquiry.</small>
         </form>
       </div>
@@ -138,6 +161,17 @@ function Footer() {
 }
 
 export function TruckSalesSite({ page }: { page: string }) {
-  const content = page === "inventory" ? <Inventory /> : page === "home-page" ? <Business /> : page === "financing" ? <Financing /> : page === "about-us" ? <About /> : page === "contact-us" ? <Contact /> : <Home />;
+  const [trucks, setTrucks] = useState<readonly Truck[]>(inventory);
+  useEffect(() => {
+    if (!supabase) return;
+    supabase.from("vehicles").select("*").neq("status", "hidden").order("created_at", { ascending: false }).then(({ data }) => {
+      if (data?.length) setTrucks(data.map(vehicle => ({
+        image: vehicle.image_url || "/images/DSC01794-scaled.jpg", name: vehicle.name, make: vehicle.make,
+        model: vehicle.model, year: String(vehicle.year), condition: vehicle.condition, type: vehicle.vehicle_type,
+        mileage: `${Number(vehicle.mileage).toLocaleString()} mi`, price: vehicle.price ? Number(vehicle.price) : null,
+      })));
+    });
+  }, []);
+  const content = page === "inventory" ? <Inventory trucks={trucks} /> : page === "home-page" ? <Business /> : page === "financing" ? <Financing /> : page === "about-us" ? <About /> : page === "contact-us" ? <Contact /> : <Home trucks={trucks} />;
   return <><Header page={page} /><main>{content}</main><Footer /></>;
 }

@@ -1,0 +1,67 @@
+.vehicle-record {
+  gap: 18px;
+}
+
+.vehicle-summary {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  gap: 14px;
+}
+
+.vehicle-summary img {
+  width: 76px;
+  height: 54px;
+  border-radius: 7px;
+  object-fit: cover;
+  background: #edf2f4;
+}
+
+.vehicle-actions {
+  display: grid;
+  grid-template-columns: minmax(120px, 1fr) auto auto;
+  align-items: end;
+  gap: 8px;
+}
+
+.vehicle-actions label {
+  color: #6f8089;
+  font-size: 11px;
+}
+
+.vehicle-actions select {
+  display: block;
+  width: 100%;
+  margin-top: 7px;
+  padding: 9px;
+  border: 1px solid #cbd7dd;
+  border-radius: 5px;
+  background: #fff;
+  color: #173440;
+  text-transform: capitalize;
+}
+
+.empty-records {
+  display: grid;
+  gap: 5px;
+  padding: 30px;
+  border: 1px dashed #cbd7dd;
+  border-radius: 8px;
+  color: #6f8089;
+  text-align: center;
+}
+
+.empty-records strong {
+  color: #173440;
+}
+
+@media (max-width: 680px) {
+  .vehicle-record {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .vehicle-actions {
+    grid-template-columns: 1fr auto auto;
+  }
+}

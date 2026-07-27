@@ -7,6 +7,7 @@ import "./admin.css";
 import "./uploads.css";
 import "./dashboard.css";
 import "./inquiries.css";
+import "./inventory.css";
 
 type Tab = "dashboard" | "inventory" | "content" | "inquiries";
 type Vehicle = {
@@ -111,6 +112,12 @@ export default function AdminPage() {
     setMessage(result.error?.message || "Inquiry status updated.");
     if (!result.error) await load();
   };
+  const updateVehicleStatus = async (id: string, status: string) => {
+    if (!supabase) return;
+    const result = await supabase.from("vehicles").update({ status, updated_at: new Date().toISOString() }).eq("id", id);
+    setMessage(result.error?.message || `Vehicle moved to ${status}.`);
+    if (!result.error) await load();
+  };
 
   return <div className="admin-shell">
     <aside className="admin-sidebar">
@@ -171,7 +178,17 @@ export default function AdminPage() {
             <button className="admin-primary">Save vehicle</button>
           </form>
         </Editor>
-        <Records>{vehicles.map(v=><Record key={v.id} title={v.name} meta={`${v.year} ${v.make} · ${v.mileage.toLocaleString()} mi · ${v.status}`} onEdit={()=>setEditingVehicle(v)} onDelete={()=>remove("vehicles",v.id)}/>)}</Records>
+        <Records>
+          {vehicles.map(v=><article className="record vehicle-record" key={v.id}>
+            <div className="vehicle-summary">{v.image_url&&<img src={v.image_url} alt=""/>}<div><h3>{v.name}</h3><span>{v.year} {v.make} {v.model} · {v.mileage.toLocaleString()} mi</span></div></div>
+            <div className="vehicle-actions">
+              <label>Status<select aria-label={`Status for ${v.name}`} value={v.status} onChange={e=>void updateVehicleStatus(v.id,e.target.value)}><option value="available">Available</option><option value="pending">Pending</option><option value="sold">Sold</option><option value="hidden">Hidden</option></select></label>
+              <button onClick={()=>setEditingVehicle(v)}>Edit</button>
+              <button className="danger" onClick={()=>void remove("vehicles",v.id)}>Delete</button>
+            </div>
+          </article>)}
+          {!vehicles.length&&<div className="empty-records"><strong>No vehicles yet</strong><span>Add your first vehicle using the form.</span></div>}
+        </Records>
       </section>}
       {tab === "content" && <section className="admin-workspace">
         <Editor title={editingContent.id ? "Edit content" : "Add content block"}>
